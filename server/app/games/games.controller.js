@@ -55,7 +55,7 @@ const fetchGames = async (nickname) => {
             headers: {
                 'Accept': 'application/x-ndjson',
             },
-            responseType: 'text' // Указываем, что ожидаем текстовый ответ
+            responseType: 'text'
         });
 
         const lines = response.data.trim().split('\n');
@@ -67,6 +67,48 @@ const fetchGames = async (nickname) => {
     }
 }
 
+
+// HUETA NADO PEREPISAT
+// export const generateReport = asyncHandler(async (req, res) => {
+//     let blunders = await prisma.blunders.findMany({
+//         where: {
+//             userID: req.id
+//         },
+//         orderBy: {
+//             id: 'desc'
+//         }
+//     })
+
+//     for (const blunder of blunders) {
+//         const winrate = blunder.winrate;
+//         const lose = blunder.lose;
+//         const count = blunder.count;
+//         const criticalRating = count * lose * ((150 - winrate) / 100);
+
+//         await prisma.blunder.update({
+//             where: {
+//                 id: blunder.id
+//             },
+//             data: {
+//                 criticalRating: criticalRating
+//             }
+//         });
+//     }
+
+//     blunders = await prisma.blunders.findMany({
+//         where: {
+//             userID: req.id
+//         },
+//         orderBy: {
+//             criticalRating: 'desc'
+//         }
+//     })
+
+//     res.json(blunders)
+// })
+
+
+
 export const analyseGames = asyncHandler(async (req, res) => {
     let games = []
     games = await prisma.games.findMany({
@@ -76,7 +118,7 @@ export const analyseGames = asyncHandler(async (req, res) => {
         orderBy: {
             id: 'desc'
         },
-        take: 2,
+        // take: 2,
     })
 
     let globalFenList = []
@@ -110,12 +152,9 @@ export const analyseGames = asyncHandler(async (req, res) => {
 })
 
 
-// const stockfish = require('stockfish');
-
 const getEvaluation = (fen) => {
     return new Promise((resolve, reject) => {
-        const engine = stockfish();  // Создаем новый экземпляр движка
-        // Обработчик сообщений от движка
+        const engine = stockfish(); 
         engine.onmessage = function (event) {
             if (event.toString().includes('info')) {
                 let msg = event.split(' ')
@@ -124,7 +163,6 @@ const getEvaluation = (fen) => {
                     const match = event.match(regex);
                     engine.postMessage('quit')
                     console.log(`${match[2]} ${match[3]}`)
-                    // resolve(parseInt(match[1], 10))
                 }  
             }
             
@@ -134,7 +172,7 @@ const getEvaluation = (fen) => {
         engine.postMessage('isready');
 
         engine.postMessage(`position fen ${fen}`);
-        engine.postMessage('go depth 10');  // Оценка на глубину 10
+        engine.postMessage('go depth 10');
     });
 };
 

@@ -40,5 +40,16 @@ model Games {
 
 model Theory {
   id Int @id @default(autoincrement())
-  
+  fen String @unique
+  pgn String
+  positionName String
+  positionDescription String
+  theoreticalСontinuations Json
+  theoreticalBlunders Json
+  circles Json
+  arrows Json
+}
+
+model theoreticalContinuations {
+  id Int @id @default(autoincrement())
 }

@@ -12,12 +12,18 @@ export const userAuth = asyncHandler(async (req, res) => {
         }
     })
 
-    const isPasswordCorrect = await verify(user.password, password)
+    let isPasswordCorrect
+
+    if (user) {
+        isPasswordCorrect = await verify(user.password, password) 
+    } else {
+        isPasswordCorrect = false
+    }
+
 
     if (user && isPasswordCorrect) {
         const token = generateToken(user.id)
-
-        res.json({ user, token })
+        res.json({ token })
     } else {
         res.status(401)
         throw new Error("Invalid login or password")
@@ -53,4 +59,15 @@ export const userRegistration = asyncHandler(async (req, res) => {
     const token = generateToken(user.id)
 
     res.json({user, token})
+})
+
+export const getUsername = asyncHandler(async (req, res) => {
+    const isUser = await prisma.user.findUnique({
+        where: {
+            id: req.id
+        }
+    })
+    if (isUser) {
+        res.json(isUser.name)
+    }
 })
