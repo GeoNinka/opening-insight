@@ -2,10 +2,18 @@
     <header class="header">
 
         <div>
-            <!-- <img src="../../public/icons/logo.svg" class="header__logo" alt=""> -->
             <ul class="header__navigation-list">
+                <!-- <li class="header__navigation-item-wrapper">
+                    <RouterLink class="header__navigation-item" to="/">
+                        <img src="../../public/icons/logo.svg" class="header__logo" alt="">
+                    </RouterLink>
+                </li> -->
                 <li class="header__navigation-item-wrapper">
-                    <RouterLink class="header__navigation-item" to="analysis">Загрузить партии</RouterLink>
+                    <RouterLink class="header__navigation-item" to="/">Главная</RouterLink>
+                    <div class="header__navigation-underline"></div>
+                </li>
+                <li class="header__navigation-item-wrapper">
+                    <RouterLink class="header__navigation-item" to="">Загрузить партии</RouterLink>
                     <div class="header__navigation-underline"></div>
                 </li>
                 <li class="header__navigation-item-wrapper">
@@ -128,27 +136,24 @@
         }).then(res => {
             if (res.status == 200) {
                 res.json().then(json => {
-                    console.log(json)
                     localStorage.setItem('jwtToken', json.token)
                     isMenuVisible.value = false
-                    getUsername()
+                    location.reload()
                 })
             }
             
         })
     }   
 
-
-
     async function getUsername() {
         if (localStorage.getItem('jwtToken')) {
-            const response = await fetch('http://localhost:5000/api/auth/getname', {
+            const response = await fetch('http://localhost:5000/user/profile', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
                 }
-            }).then(resp => resp.json()).then(name => {
+            }).then(resp => resp.json()).then(user => {
                 isAuthorized.value = true
-                userName.value = name
+                userName.value = user.name
             })
         }
     }
@@ -178,7 +183,8 @@
     }
 
     .header__logo {
-        height: 50px;
+        height: 40px;
+        padding: 20px;
     }
 
     .header__navigation-list {
@@ -193,7 +199,7 @@
 
     .header__navigation-item-wrapper {
         position: relative;
-        margin-left: 10px;
+        /* margin-left: 10px; */
     }
 
     .header__navigation-item {
@@ -203,7 +209,7 @@
         padding-top: 10px;
         padding-bottom: 10px;
         border: none;
-        padding: 0;
+
         font-size: 1.1rem;
         font-weight: 500;
         font-family: 'Inter';

@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
 import AnalysisPage from '@/pages/AnalysisPage.vue'
 import TestPage from '@/pages/testPage.vue'
+import TheoryPage from '@/pages/TheoryPage.vue'
+import TheoryEditorPage from '@/pages/TheoryEditorPage.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -27,6 +30,17 @@ const router = createRouter({
       path: '/test',
       name: 'test',
       component: TestPage
+    },
+    {
+      path: '/theory',
+      name: 'theory',
+      component: TheoryPage
+    },
+    {
+      path: '/theory-editor',
+      name: 'theory-editor',
+      component: TheoryEditorPage,
+      props: true,
     }
   ],
 })

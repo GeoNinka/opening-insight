@@ -57,7 +57,6 @@ const fetchGames = async (nickname) => {
             },
             responseType: 'text'
         });
-
         const lines = response.data.trim().split('\n');
         const jsonArray = lines.map(line => JSON.parse(line));
         return jsonArray.reverse();

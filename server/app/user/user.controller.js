@@ -11,7 +11,11 @@ export const userProfile = asyncHandler(async (req, res) => {
     })
 
     if (user) {
-        res.json(user)
+        res.json({
+            "name": user.name,
+            "email": user.email,
+            "role": user.role
+        })
     } else { 
         res.status(404)
         res.json("User not found")

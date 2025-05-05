@@ -31,7 +31,7 @@ export const userAuth = asyncHandler(async (req, res) => {
 })
 
 export const userRegistration = asyncHandler(async (req, res) => {
-    const {email, name, password} = req.body
+    const {email, name, password, role} = req.body
     
     const isUser = await prisma.user.findUnique({
         where: {
@@ -48,26 +48,17 @@ export const userRegistration = asyncHandler(async (req, res) => {
         data: {
             email,
             name,
-            password: await hash(password)
+            password: await hash(password),
+            role,
         },
         select: {
             email: true,
-            name: true
+            name: true,
+            role,
         }
     })
 
     const token = generateToken(user.id)
 
     res.json({user, token})
-})
-
-export const getUsername = asyncHandler(async (req, res) => {
-    const isUser = await prisma.user.findUnique({
-        where: {
-            id: req.id
-        }
-    })
-    if (isUser) {
-        res.json(isUser.name)
-    }
 })
