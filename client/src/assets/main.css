@@ -1,7 +1,9 @@
 :root {
   --accent-color: #BF4904;
   --accent-color-light: #c95715;
-  --main-light: #F2F2F2;
+  /* --accent-color-light: #B48762; */
+  --accent-color-dark: #b44200;
+  --main-light: #ffffff;
 }
 
 #app {
@@ -14,7 +16,6 @@
 }
 
 body {
-  background-color: var(--main-light);
   font-family: 'Inter';
   padding: 0;
   margin: 0;

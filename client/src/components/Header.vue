@@ -206,9 +206,9 @@
         text-decoration: none;
         cursor: pointer;
         color: black;
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding: 0;
         border: none;
+        background-color: white;
 
         font-size: 1.1rem;
         font-weight: 500;
@@ -222,7 +222,7 @@
         background-color: var(--accent-color-light);
         height: 2px;
         transition: 0.3s ease;
-        z-index: -1;
+        z-index: 1;
     }
 
     .header__navigation-item:hover+div {
@@ -237,7 +237,7 @@
         position: absolute;
         left: 0;
         top: 0;
-        backdrop-filter: blur(2px) brightness(60%);
+        backdrop-filter: brightness(60%);
         display: flex;
         align-items: center;
         align-content: center;
@@ -301,6 +301,7 @@
     .header__auth-wrapper {
         display: flex;
         flex-direction: row;
+        gap: 20px;
     }
 
     @keyframes Appearance {

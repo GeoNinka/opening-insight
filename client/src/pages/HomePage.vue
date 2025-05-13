@@ -3,7 +3,6 @@
         <Header />
         <div class="main__heading-wrapper">
             <h1 class="main__heading">OPENING <br> INSIGHT.</h1>
-            <!-- <p class="main__heading-description">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Incidunt nesciunt illum ut dignissimos eaque hic odio? Fugiat temporibus repellat distinctio.</p> -->
         </div>
         <div class="main__grid">
             <div class="main__grid-item main__grid-item--gallery">
@@ -11,7 +10,7 @@
             </div>
             <div class="main__grid-item main__grid-item--text">
                 <p class="main__grid-text">
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed ipsa sapiente delectus similique facere magnam suscipit ex laudantium cum sit.
+                    Opening Insight — бесплатный сервис для анализа шахматных партий и выявления ваших самых частых дебютных ошибок. Узнайте о слабых местах своей дебютной подготовки до того, как это сделают ваши противники. 
                 </p>
             </div>
             <div class="main__grid-item main__grid-item--button">
