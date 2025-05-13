@@ -23,6 +23,7 @@ model User {
   password String
   role String
   games Games[]
+  blunders Blunders[]
 }
 
 model Games {
@@ -37,12 +38,23 @@ model Games {
   side String
   moves String
   winner String 
+  blunders Blunders[]
+}
+
+model Blunders {
+  id Int @id @default(autoincrement())
+  from String   
+  to String
+  game Games @relation(fields: [gameId], references: [id])
+  gameId Int
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  loss Float
 }
 
 model Theory {
   id Int @id @default(autoincrement())
   fen String @unique
-  pgn String
   positionName String
   positionDescription String
   circles Json
@@ -57,6 +69,7 @@ model theoreticalContinuations {
   id Int @id @default(autoincrement())
   fromId Int
   toId Int
+  move String
   from Theory @relation("FromTheory", fields: [fromId], references: [id])
   to Theory @relation("ToTheory", fields: [toId], references: [id])
 }
@@ -65,6 +78,7 @@ model theoreticalBlunders {
   id Int @id @default(autoincrement())
   fromId Int
   toId   Int
+  move String
   from Theory @relation("FromBlunder", fields: [fromId], references: [id])
   to Theory @relation("ToBlunder", fields: [toId], references: [id])
 }
