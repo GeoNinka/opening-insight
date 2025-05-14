@@ -55,7 +55,7 @@ const fetchGames = async (nickname) => {
     try {
         const response = await axios.get(`https://lichess.org/api/games/user/${nickname}`, {
             params: {
-                max: 10
+                max: 2
             },
             headers: {
                 'Accept': 'application/x-ndjson',
@@ -71,52 +71,9 @@ const fetchGames = async (nickname) => {
     }
 }
 
-
-// HUETA NADO PEREPISAT
-// export const generateReport = asyncHandler(async (req, res) => {
-//     let blunders = await prisma.blunders.findMany({
-//         where: {
-//             userID: req.id
-//         },
-//         orderBy: {
-//             id: 'desc'
-//         }
-//     })
-
-//     for (const blunder of blunders) {
-//         const winrate = blunder.winrate;
-//         const lose = blunder.lose;
-//         const count = blunder.count;
-//         const criticalRating = count * lose * ((150 - winrate) / 100);
-
-//         await prisma.blunder.update({
-//             where: {
-//                 id: blunder.id
-//             },
-//             data: {
-//                 criticalRating: criticalRating
-//             }
-//         });
-//     }
-
-//     blunders = await prisma.blunders.findMany({
-//         where: {
-//             userID: req.id
-//         },
-//         orderBy: {
-//             criticalRating: 'desc'
-//         }
-//     })
-
-//     res.json(blunders)
-// })
-
-
-
 export const analyseGames = asyncHandler(async (req, res) => {
     const engine = await stockfish();
-    const evaluations = [];
-    const globalFenList = [];
+    const blunders = [];
 
     await new Promise((resolve) => {
         engine.onmessage = (msg) => {
@@ -133,9 +90,9 @@ export const analyseGames = asyncHandler(async (req, res) => {
     });
 
     for (let i = 0; i < games.length; i++) {
-        const chess = new Chess()
-        const movesList = games[i].moves.split(' ').slice(0, 7)
-        const fenList = []
+        const chess = new Chess();
+        const movesList = games[i].moves.split(' ').slice(0, 12);
+        const fenList = [];
 
         for (let move of movesList) {
             chess.move(move);
@@ -143,136 +100,75 @@ export const analyseGames = asyncHandler(async (req, res) => {
             fenList.push(fen);
         }
 
-        for (let i = 0; i < fenList.length - 1; i++) {
-            let fromFEN = fenList[i]
-            let toFEN = fenList[i + 1]
+        for (let j = 0; j < fenList.length - 1; j++) {
+            const fromFEN = fenList[j];
+            const toFEN = fenList[j + 1];
 
-            let fpe = await getEvaluation(fromFEN, engine)
-            let spe = await getEvaluation(toFEN, engine)
+            const isUserMove = (games[i].side === 'white' && j % 2 === 0) || (games[i].side === 'black' && j % 2 === 1)
 
-            globalFenList.push({"first": fpe, "second": spe})
+            if (isUserMove) continue
+
+            const fromTheory = await prisma.theory.findUnique({ where: { fen: fromFEN } });
+            const toTheory = await prisma.theory.findUnique({ where: { fen: toFEN } });
+
+            if (fromTheory && toTheory) {
+                const isContinuation = await prisma.theoreticalContinuations.findFirst({
+                    where: {
+                        fromId: fromTheory.id,
+                        toId: toTheory.id
+                    }
+                });
+
+                if (!isContinuation) {
+                    const isBlunder = await prisma.theoreticalBlunders.findFirst({
+                        where: {
+                            fromId: fromTheory.id,
+                            toId: toTheory.id
+                        }
+                    });
+
+                    if (isBlunder) {
+                        const blunder = await prisma.blunders.create({
+                            data: {
+                                from: fromFEN,
+                                to: toFEN,
+                                gameId: games[i].id,
+                                userId: req.id,
+                                loss: -1
+                            }
+                        });
+                        blunders.push(blunder);
+                        break;
+                    }
+                }
+            } else {
+                const firstEval = await getEvaluation(fromFEN, engine);
+                const secondEval = await getEvaluation(toFEN, engine);
+
+                if (firstEval.value !== null && secondEval.value !== null) {
+                    const loss = Math.abs(firstEval.value - secondEval.value);
+
+                    if (loss >= 1.2) {
+                        const blunder = await prisma.blunders.create({
+                            data: {
+                                from: fromFEN,
+                                to: toFEN,
+                                gameId: games[i].id,
+                                userId: req.id,
+                                loss: loss
+                            }
+                        });
+                        blunders.push(blunder);
+                        break; 
+                    }
+                }
+            }
         }
     }
 
-    res.json(globalFenList)
-
-    // for (let game of games) {
-    //     const chess = new Chess();
-    //     const movesList = game.moves.split(' ').slice(0, 15);
-    //     const fenList = [];
-
-    //     for (let move of movesList) {
-    //         chess.move(move);
-    //         const fen = chess.fen().split(' -')[0];
-    //         fenList.push(fen);
-    //     }
-
-    //     globalFenList.push(fenList);
-    // }
-
-    // for (let fenList of globalFenList) {
-    //     for (let fen of fenList) {
-    //         const evaluation = await getEvaluation(fen, engine);
-    //         evaluations.push(evaluation);
-    //     }
-    // }
-
-    // engine.postMessage('quit');
-
-    // res.json(evaluations);
+    engine.postMessage('quit');
+    res.json(blunders);
 });
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// export const analyseGames = asyncHandler(async (req, res) => {
-//     const engine = await stockfish();
-//     const evaluations = [];
-//     const globalFenList = [];
-
-//     await new Promise((resolve) => {
-//         engine.onmessage = (msg) => {
-//             const text = msg.data || msg;
-//             if (text === 'readyok') resolve();
-//         };
-//         engine.postMessage('uci');
-//         engine.postMessage('isready');
-//     });
-
-//     const games = await prisma.games.findMany({
-//         where: { userID: req.id },
-//         orderBy: { id: 'desc' },
-//     });
-
-//     for (let game of games) {
-//         const chess = new Chess();
-//         const movesList = game.moves.split(' ').slice(0, 15);
-//         const fenList = [];
-//         const blunders = [];
-
-//         for (let move of movesList) {
-//             chess.move(move);
-//             const fenBefore = chess.fen().split(' -')[0];
-//             chess.move(move);
-//             const fenAfter = chess.fen().split(' -')[0];
-//             fenList.push({ fenBefore, fenAfter });
-
-//             // Проверка наличия хода в таблице theoreticalBlunders
-//             const blunder = await prisma.theoreticalBlunders.findFirst({
-//                 where: {
-//                     from: fenBefore,
-//                     to: fenAfter,
-//                 },
-//             });
-
-//             if (blunder) {
-//                 // Если ход найден в таблице theoreticalBlunders, сохраняем его в таблице Blunders
-//                 await prisma.blunders.create({
-//                     data: {
-//                         from: fenBefore,
-//                         to: fenAfter,
-//                         gameId: game.id,
-//                         userId: req.id,
-//                     },
-//                 });
-//                 blunders.push({ fenBefore, fenAfter });
-//                 break; // Переходим к следующей игре после нахождения ошибки
-//             } else {
-//                 // Если ход не найден в таблице theoreticalBlunders, проверяем его с помощью getEvaluation
-//                 const evaluationBefore = await getEvaluation(fenBefore, engine);
-//                 const evaluationAfter = await getEvaluation(fenAfter, engine);
-
-//                 if (
-//                     evaluationBefore &&
-//                     evaluationAfter &&
-//                     Math.abs(evaluationBefore.value - evaluationAfter.value) > 1.2
-//                 ) {
-//                     // Если разница в оценке превышает 1.2, сохраняем ход в таблице Blunders
-//                     await prisma.blunders.create({
-//                         data: {
-//                             from: fenBefore,
-//                             to: fenAfter,
-//                             gameId: game.id,
-//                             userId: req.id,
-//                         },
-//                     });
-//                     blunders.push({ fenBefore, fenAfter });
-//                     break; // Переходим к следующей игре после нахождения ошибки
-//                 }
-//             }
-//         }
-
-//         globalFenList.push(fenList);
-//     }
-
-//     engine.postMessage('quit');
-
-//     res.json();
-// });
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
