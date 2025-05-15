@@ -75,6 +75,7 @@ export const addPosition = asyncHandler(async (req, res) => {
                 fromId: fromTheory.id,
                 toId: toTheory.id,
                 move,
+                loss: -1
             },
         })
     }
