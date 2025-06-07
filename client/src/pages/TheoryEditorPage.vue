@@ -60,18 +60,18 @@
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <p class="right-table__fen">{{ item.toFen }}</p>
+                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
-                        <button @click.stop="deleteContinuation(item)">удалить</button>
+                        <button class="delete-button" @click.stop="deleteContinuation(item)"><img src="../../icons/deleteWhite.svg" style="max-width: 25px; max-height: 25px;" alt=""></button>
                     </li>
                     <p>Частые ошибки</p>
                     <li class="right-table__item" v-for="(item, index) in blunders" :key="index" @mouseenter="handleMouseEnter(item)" @mouseleave="handleMouseLeave" @click="handleContinuationClick(item)">
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <p class="right-table__fen">{{ item.toFen }}</p>
+                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
-                        <button @click.stop="deleteContinuation(item)">удалить</button>
+                        <button class="delete-button" @click.stop="deleteContinuation(item)"><img src="../../icons/deleteWhite.svg" style="max-width: 25px; max-height: 25px;" alt=""></button>
                     </li>
                 </ul>
             </div>
@@ -690,6 +690,7 @@
         transition: 0.4s;
         cursor: pointer;
         user-select: none;
+        position: relative;
     }
 
     .right-table__item:hover {
@@ -717,6 +718,21 @@
     .editor__move {
         margin: 0;
         height: 20px;
+    }
+
+    .delete-button {
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        right: 20px;
+        background-color: var(--accent-color-light);
+        border: none;
+        border-radius: 5px;
+    }
+
+    .delete-button:hover {
+        background-color: var(--accent-color-dark);
     }
 </style>
 

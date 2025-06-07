@@ -3,21 +3,16 @@
 
         <div>
             <ul class="header__navigation-list">
-                <!-- <li class="header__navigation-item-wrapper">
-                    <RouterLink class="header__navigation-item" to="/">
-                        <img src="../../public/icons/logo.svg" class="header__logo" alt="">
-                    </RouterLink>
-                </li> -->
                 <li class="header__navigation-item-wrapper">
                     <RouterLink class="header__navigation-item" to="/">Главная</RouterLink>
                     <div class="header__navigation-underline"></div>
                 </li>
                 <li class="header__navigation-item-wrapper">
-                    <RouterLink class="header__navigation-item" to="">Загрузить партии</RouterLink>
+                    <RouterLink class="header__navigation-item" to="games">Загрузить партии</RouterLink>
                     <div class="header__navigation-underline"></div>
                 </li>
                 <li class="header__navigation-item-wrapper">
-                    <RouterLink class="header__navigation-item" to="theory">Анализ партий</RouterLink>
+                    <RouterLink class="header__navigation-item" to="analysis">Анализ партий</RouterLink>
                     <div class="header__navigation-underline"></div>
                 </li>
                 <li class="header__navigation-item-wrapper">
@@ -38,7 +33,7 @@
                     <div class="header__navigation-underline"></div>
                 </div>
                 <div class="header__navigation-item-wrapper">
-                    <button class="header__navigation-item" @click="toggleMenu">Регистрация</button>
+                    <button class="header__navigation-item" @click="toggleMenuReg">Регистрация</button>
                     <div class="header__navigation-underline"></div>
                 </div>
             </div>
@@ -57,36 +52,47 @@
                 <div @click="handleFormClick" class="header__form">
                     <button @click="toggleMenu" class="form__close-button">X</button>
                     <div class="form__toggler">
-                        <button @click="untranslateForm">
+                        <button class="form__toggle-button" :class="{'form__toggle-button--active': !isFormTranslate}" @click="untranslateForm">
                             Войти
                         </button>
-                        <button @click="translateForm">
+                        <button class="form__toggle-button" :class="{'form__toggle-button--active': isFormTranslate}" @click="translateForm">
                             Зарегистрироваться
                         </button>
                     </div>
                     <div class="form__wrapper">
                         <form @submit.prevent="submitLoginForm" method="post" class="form" :class="{'form--translate': isFormTranslate}">
-                            <p class="form__heading">
-                                Войти в аккаунт
-                            </p>
-                            <div class="form__pair">
-                                <label>Email</label>
-                                <input type="text" v-model="email" />
-                            </div>
-                            <div class="form__pair">
-                                <label>Password</label>
-                                <input type="password" v-model="password" />
+                            <div class="form--login">
+                                <div class="form__pair">
+                                    <label class="form__label">Электронная почта</label>
+                                    <input class="form__input" type="text" v-model="email" />
+                                </div>
+                                <div class="form__pair">
+                                    <label class="form__label">Пароль</label>
+                                    <input class="form__input" type="password" v-model="password" />
+                                </div>
                             </div>
                             <button type="submit" class="form__button">
-                                Отправить
+                                Войти
                             </button>
                         </form>
                         <form @submit.prevent="submitRegistrationForm" method="post" class="form" :class="{'form--translate': isFormTranslate}">
-                            <p class="form__heading">
-                                Создать аккаунт
-                            </p>
+                            <div>
+                                <div class="form__pair">
+                                    <label class="form__label">Электронная почта</label>
+                                    <input class="form__input" type="text" v-model="emailReg" />
+                                </div>                                <div class="form__pair">
+                                    <label class="form__label">Логин</label>
+                                    <input class="form__input" type="text" v-model="nameReg" />
+                                </div>                                <div class="form__pair">
+                                    <label class="form__label">Пароль</label>
+                                    <input class="form__input" type="password" v-model="passwordReg" />
+                                </div>                                <div class="form__pair">
+                                    <label class="form__label">Подтверждение пароля</label>
+                                    <input class="form__input" type="password" v-model="confirmPassowrdReg" />
+                                </div>
+                            </div>
                             <button type="submit" class="form__button">
-                                Отправить
+                                Зарегистрироваться
                             </button>
                         </form>
                     </div>
@@ -102,12 +108,23 @@
     let email = ref('admin@admin.ru')
     let password = ref('password')
 
+    let emailReg = ref('')
+    let nameReg = ref('')
+    let passwordReg = ref('')
+    let confirmPassowrdReg = ref('')
+
     let isAuthorized = ref(false)
     let userName = ref()
 
     let isFormTranslate = ref(false)
 
     function toggleMenu() {
+        isFormTranslate.value = false
+        isMenuVisible.value = !isMenuVisible.value
+    }
+
+    function toggleMenuReg() {
+        isFormTranslate.value = true
         isMenuVisible.value = !isMenuVisible.value
     }
 
@@ -144,6 +161,26 @@
             
         })
     }   
+
+    async function submitRegistrationForm() {
+        
+        if (passwordReg.value == confirmPassowrdReg.value) {
+            const response = await fetch('http://localhost:5000/api/auth/registration', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: emailReg.value,
+                    name: nameReg.value,
+                    password: passwordReg.value,
+                    role: 'user'
+                }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(res => {
+                console.log(res)
+            })
+        }
+    }
 
     async function getUsername() {
         if (localStorage.getItem('jwtToken')) {
@@ -199,7 +236,6 @@
 
     .header__navigation-item-wrapper {
         position: relative;
-        /* margin-left: 10px; */
     }
 
     .header__navigation-item {
@@ -248,8 +284,9 @@
         background-color: var(--main-light);
         width: min(600px, 60%);
         margin: 0 auto;
-        height: 600px;
+        height: 500px;
         border-radius: 10px;
+        padding: 30px;
         display: flex;
         flex-direction: column;
         position: relative;
@@ -268,9 +305,9 @@
     .form__wrapper {
         display: flex;
         flex-direction: row;
-        border: 1px red solid;
         margin: 0 auto;
         width: 80%;
+        height: 100%;
         overflow: hidden;
     }
 
@@ -278,9 +315,27 @@
         display: flex;
         flex-shrink: 0;
         flex-direction: column;
+        justify-content: space-between;
         width: 100%;
         height: 100%;
         transition: 0.5s ease-in-out;
+    }
+
+    .form__heading {
+        font-size: 2rem;
+        margin: 0;
+        color: var(--accent-color-light);
+    }
+
+    .form__label {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .form__input {
+        height: 40px;
+        font-size: 1.2rem;
+        width: 80%;
     }
 
     .form--translate {
@@ -290,6 +345,23 @@
 
     .form__pair {
         position: relative;
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .form__button {
+        padding: 25px;
+        margin: 0 auto;
+        width: 80%;
+        font-size: 1.2rem;
+        color: white;
+        background-color: var(--accent-color-light);
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
     }
 
     .header__auth {
@@ -302,6 +374,28 @@
         display: flex;
         flex-direction: row;
         gap: 20px;
+    }
+
+    .form__toggler {
+        margin: 0 auto;
+        display: flex;
+        width: 60%;
+        justify-content: space-around;
+    }
+
+    .form__toggle-button {
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+    }
+
+    .form__toggle-button--active {
+        color: var(--accent-color-light);
+    }
+
+    .form--login {
+        margin-top: 70px;
     }
 
     @keyframes Appearance {

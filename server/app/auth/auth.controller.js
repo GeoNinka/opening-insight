@@ -44,19 +44,23 @@ export const userRegistration = asyncHandler(async (req, res) => {
         throw new Error('User already exist')
     }
 
-    const user = await prisma.user.create({
-        data: {
-            email,
-            name,
-            password: await hash(password),
-            role,
-        },
-        select: {
-            email: true,
-            name: true,
-            role,
-        }
-    })
+    try {
+        const user = await prisma.user.create({
+            data: {
+                email,
+                name,
+                password: await hash(password),
+                role,
+            },
+            select: {
+                email: true,
+                name: true,
+                role: true,
+            }
+        })
+    } catch (e) {
+        console.log(e)
+    }
 
     const token = generateToken(user.id)
 

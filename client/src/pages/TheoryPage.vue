@@ -44,7 +44,7 @@
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <p class="right-table__fen">{{ item.toFen }}</p>
+                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
                     </li>
                     <p>Частые ошибки</p>
@@ -52,7 +52,7 @@
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <p class="right-table__fen">{{ item.toFen }}</p>
+                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
                     </li>
                 </ul>
@@ -104,7 +104,6 @@
         previewBoard = Chessboard2('preview-board', {
             position: `${previewPositionFEN.value.split(' ')[0]}`,
             draggable: false,
-            showNotation: false,
         })
 
         window.addEventListener('keydown', handleKeydown)

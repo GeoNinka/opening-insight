@@ -10,6 +10,7 @@ import { errorHandler, notFound } from './app/middleware/middleware.error.js'
 
 const app = express()
 
+
 dotenv.config()
 
 async function main() {
