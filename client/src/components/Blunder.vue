@@ -1,8 +1,9 @@
 <template>
     <div class="blunder" @mouseenter="mouseEnterHandler" @mouseleave="mouseLeaveHandler">
         <div :id="blunderData.id" ref="boardContainer" class="blunder__board"></div>
-        <p class="blunder__text">Встретилось раз: {{ blunderData.counter }}</p>
-        <p class="blunder__text">Потеря сантипешек: {{ blunderData.loss.toFixed(2) }}</p>
+        <p class="blunder__text" v-if="blunderData.counter != null">Встретилось раз: {{ blunderData.counter }}</p>
+        <p class="blunder__text" v-if="blunderData.loss != null">Потеря сантипешек: {{ blunderData.loss != null ?  blunderData.loss.toFixed(2) : null }}</p>
+        {{ side }}
     </div>
 </template>
 

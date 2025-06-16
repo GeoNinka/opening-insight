@@ -343,7 +343,7 @@
             if (!response.ok) {
                 const errorData = await response.json();
                 editorMessage.value = errorData.message
-                        editorPositionFEN.value = positionFEN.value
+                editorPositionFEN.value = positionFEN.value
                 game.reset()
                 game.load(editorPositionFEN.value)
                 editorBoard.fen(editorPositionFEN.value)

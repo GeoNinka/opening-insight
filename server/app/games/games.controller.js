@@ -108,7 +108,7 @@ export const analyseGames = asyncHandler(async (req, res) => {
 
     for (let i = 0; i < games.length; i++) {
         const chess = new Chess()
-        const movesList = games[i].moves.split(' ').slice(0, 2)
+        const movesList = games[i].moves.split(' ').slice(0, 8)
         let fenList = []
 
         fenList.push(chess.fen().split(' -')[0])
@@ -273,7 +273,7 @@ const getBestMove = (fen) => {
                 engineGBM.postMessage('ucinewgame');
                 engineGBM.postMessage(`position fen ${fen}`);
                 console.log(fen)
-                engineGBM.postMessage('go depth 18');
+                engineGBM.postMessage('go depth 15');
             }
 
             if (message.startsWith('info')) {
@@ -489,3 +489,12 @@ export const getGamesByUserId = asyncHandler(async (req, res) => {
         }
     })
 })
+
+
+
+
+
+
+
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // м

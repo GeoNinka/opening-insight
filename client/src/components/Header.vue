@@ -19,10 +19,10 @@
                     <RouterLink class="header__navigation-item" to="theory">База дебютов</RouterLink>
                     <div class="header__navigation-underline"></div>
                 </li>
-                <li class="header__navigation-item-wrapper">
+                <!-- <li class="header__navigation-item-wrapper">
                     <RouterLink class="header__navigation-item" to="theory">О приложении</RouterLink>
                     <div class="header__navigation-underline"></div>
-                </li>
+                </li> -->
             </ul>
         </div>
 
@@ -83,7 +83,8 @@
                                 </div>                                <div class="form__pair">
                                     <label class="form__label">Логин</label>
                                     <input class="form__input" type="text" v-model="nameReg" />
-                                </div>                                <div class="form__pair">
+                                </div>                                
+                                <div class="form__pair">
                                     <label class="form__label">Пароль</label>
                                     <input class="form__input" type="password" v-model="passwordReg" />
                                 </div>                                <div class="form__pair">
@@ -141,25 +142,31 @@
     }
 
     async function submitLoginForm() {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({
-                email: email.value,
-                password: password.value
-            }),
-            headers: {
-                "Content-Type": "application/json"
-            }
-        }).then(res => {
-            if (res.status == 200) {
-                res.json().then(json => {
-                    localStorage.setItem('jwtToken', json.token)
-                    isMenuVisible.value = false
-                    location.reload()
-                })
-            }
-            
-        })
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (emailRegex.test(email.value)) {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: email.value,
+                    password: password.value
+                }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(res => {
+                if (res.status == 200) {
+                    res.json().then(json => {
+                        localStorage.setItem('jwtToken', json.token)
+                        isMenuVisible.value = false
+                        location.reload()
+                    })
+                }
+                
+            })
+        } else {
+            // emailError.value = ''
+        }
+        
     }   
 
     async function submitRegistrationForm() {

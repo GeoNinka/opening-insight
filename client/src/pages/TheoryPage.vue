@@ -165,7 +165,6 @@
                 positionPGN.value = game.pgn().replace(/\[.*?\]\s*/g, '').replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '')
             })
         } catch (e) {
-            console.log(123)
             console.log(e)
             board.clearCircles()
             return 'snapback'
@@ -186,16 +185,16 @@
         const redo = redoStack.pop()
         if (redo) {
             const moveObj = {
-            from: redo.from,
-            to: redo.to,
-            promotion: redo.promotion
+                from: redo.from,
+                to: redo.to,
+                promotion: redo.promotion
             }
             const moved = game.move(moveObj)
             if (moved) {
-            undoStack.push(moved)
-            board.fen(game.fen())
-            positionFEN.value = game.fen()
-            positionPGN.value = game.pgn().replace(/\[.*?\]\s*/g, '').replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '')
+                undoStack.push(moved)
+                board.fen(game.fen())
+                positionFEN.value = game.fen()
+                positionPGN.value = game.pgn().replace(/\[.*?\]\s*/g, '').replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '')
             }
         }
     }

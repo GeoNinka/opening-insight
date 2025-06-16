@@ -6,7 +6,19 @@
         </div>
         <div class="main__grid">
             <div class="main__grid-item main__grid-item--gallery">
-                
+                <div class="gallery__wrapper">
+                    <div class="flex__blunders">
+                        <div class="grid__blunders">
+                            <Blunder class="blunder blunder--active" id=1 :blunderData="{id: 1, counter: null, loss: null, from: 'r1bqkb1r/p4ppp/2p2n2/nB2p1N1/8/8/PPPP1PPP/RNBQK2R', to: 'r1bqkb1r/p4ppp/2p2n2/n3p1N1/B7/8/PPPP1PPP/RNBQK2R', game: {side: 'white'}}"></Blunder>
+                            <Blunder class="blunder" id=2 :blunderData="{id: 2, counter: null, loss: null, from: 'rnbqk2r/pppp1ppp/8/2b1p3/2B1P1n1/2N2N2/PPPP1PPP/R1BQK2R', to: 'rnbqk2r/pppp1ppp/8/2b1p3/2B1P1n1/2NP1N2/PPP2PPP/R1BQK2R b KQkq', game: {side: 'white'}}"></Blunder>
+                            <Blunder class="blunder" id=3 :blunderData="{id: 3, counter: null, loss: null, from: 'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq', to: 'rnbqkbnr/ppp1pppp/8/3p4/3PP3/8/PPP2PPP/RNBQKBNR b KQkq', game: {side: 'white'}}"></Blunder>
+                            <Blunder class="blunder" id=4 :blunderData="{id: 4, counter: null, loss: null, from: 'r1bqkb1r/ppp2ppp/2n2n2/3pP3/2Bp4/5N2/PPP2PPP/RNBQK2R', to: 'r1bqkb1r/ppp2ppp/2n2P2/3p4/2Bp4/5N2/PPP2PPP/RNBQK2R', game: {side: 'white'}}"></Blunder>
+                        </div>
+                    </div>
+                    <div class="board__wrapper">
+                        <div id="board" class="board"></div>
+                    </div>
+                </div>
             </div>
             <div class="main__grid-item main__grid-item--text">
                 <p class="main__grid-text">
@@ -27,7 +39,52 @@
 
 <script setup>
     import Header from '../components/Header.vue';
-    
+    import Blunder from '@/components/Blunder.vue';
+    import { ref, onMounted, onUnmounted } from 'vue';
+    import { Chessboard2 } from '@chrisoakman/chessboard2/dist/chessboard2.min.mjs';
+    import '@chrisoakman/chessboard2/dist/chessboard2.min.css'
+
+    const positionFEN = ref('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq')
+
+    let board = null
+
+    let currentIndex = ref(0)
+
+    const interval = ref()
+
+    const fenList = [
+        'r1bqkb1r/p4ppp/2p2n2/nB2p1N1/8/8/PPPP1PPP/RNBQK2R',
+        'rnbqk2r/pppp1ppp/8/2b1p3/2B1P1n1/2N2N2/PPPP1PPP/R1BQK2R',
+        'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR',
+        'r1bqkb1r/ppp2ppp/2n2n2/3pP3/2Bp4/5N2/PPP2PPP/RNBQK2R',
+    ]
+
+    onMounted( () => {
+        board = Chessboard2('board', {
+            position: 'r1bqkb1r/p4ppp/2p2n2/nB2p1N1/8/8/PPPP1PPP/RNBQK2R',
+            draggable: false,
+        })
+
+        let blunders = [
+            document.getElementById('1'), 
+            document.getElementById('2'), 
+            document.getElementById('3'), 
+            document.getElementById('4')
+        ]
+
+
+        interval.value = setInterval(() => {
+            blunders[currentIndex.value].classList.remove('blunder--active');
+            currentIndex.value = (currentIndex.value + 1) % blunders.length;
+            blunders[currentIndex.value].classList.add('blunder--active');
+            board.fen(fenList[currentIndex.value])
+        }, 3000)
+    })
+
+    onUnmounted(() => {
+        clearInterval(interval.value);
+
+    })
 </script>
 
 <style scoped>
@@ -90,17 +147,36 @@
 
     .main__grid-item--gallery {
         grid-area: gallery;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .gallery__wrapper {
+        margin: 0 auto;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 93%;
+    }
+
+    .board {
+        width: 427px;
+    }
+
+    .board__wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .main__grid-item--text {
         grid-area: text;
         font-size: 2rem;
-        /* padding: 2rem; */
         display: flex;
-        /* width: 70%; */
         align-items: end;
         border: none;
-        /* text-align: center; */
     }
 
     .main__grid-text {
@@ -142,6 +218,35 @@
         transform: translateX(1rem);
     }
 
+    .flex__blunders {
+        height: 100%;
+        justify-content: center;
+        display: flex;
+        flex-direction: column;
+        width: 50%;
+    }
+
+    .grid__blunders {
+        max-width: 420px;
+        gap: 20px; 
+        width: 50%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .blunder {
+        border: 3px solid grey;
+        filter: grayscale(1);
+        transition: 0.5s;
+        cursor: default;
+    }
+
+    .blunder--active {
+        border: 3px solid var(--accent-color-light);
+        filter: grayscale(0);
+        transition: 0.5s;
+
+    }
 
     @keyframes fadeIn {
         0% {
