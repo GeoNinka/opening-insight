@@ -325,7 +325,7 @@ const getEvaluation = (fen, engine) => {
 
             engine.onmessage = (event) => {
                 const msg = typeof event === 'string' ? event : event.data
-                if (msg.startsWith('info depth 18')) {
+                if (msg.startsWith('info depth 15')) {
                     engine.postMessage('stop')
                     const match = msg.match(/score\s(cp|mate)\s(-?\d+)/)
                     if (match && !resolved) {
@@ -352,7 +352,7 @@ const getEvaluation = (fen, engine) => {
                 }
             }
             engine.postMessage(`position fen ${fen}`)
-            engine.postMessage('go depth 18')
+            engine.postMessage('go depth 15')
         }
         attemptEvaluation()
     })

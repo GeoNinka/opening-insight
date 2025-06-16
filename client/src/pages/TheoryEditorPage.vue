@@ -100,11 +100,6 @@
                         <button class="editor__button" @click="addPosition">Добавить</button>
                         <p style="color: black;">{{ editorMessage }}</p>
                     </div>
-                    <!-- <div class="editor__divider"/> -->
-                    <!-- <div class="editor__form" action="">
-                        <p class="editor__label">Стрелки</p>
-                        <button class="editor__button">Изменить</button>
-                    </div> -->
                 </div>
             </div>
         </div>
