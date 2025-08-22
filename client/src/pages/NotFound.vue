@@ -2,10 +2,9 @@
     <div class="main">
         <Header></Header>
         <div class="wrapper">
-            <div id="board" class="board"></div>
             <p class="p404">404</p>
-            <p class="text">Похоже играть тут не с кем...</p>
-            <RouterLink class="link" to="/">Вернуться на главную</RouterLink>
+            <div id="board" class="board"></div>
+            <RouterLink class="p404" to="/">Вернуться <br> на главную</RouterLink>
         </div>
 
     </div>
@@ -47,6 +46,7 @@
         font-weight: 800;
         font-style: italic;
         color: var(--accent-color-light);
+        text-decoration: none;
     }
 
     .text {
