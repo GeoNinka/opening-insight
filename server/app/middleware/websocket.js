@@ -6,7 +6,7 @@ export function setupWebSocket(server) {
     const wss = new WebSocketServer({ server });
 
     wss.on('connection', (ws, req) => {
-        const userId = req.url.split('?id=')[1]; // Простой способ передать ID клиента
+        const userId = req.url.split('?id=')[1]; 
         if (userId) {
             clients.set(userId, ws);
             console.log(`Клиент ${userId} подключился`);
