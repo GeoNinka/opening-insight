@@ -3,7 +3,7 @@
         <Header></Header>
         <div class="games">
             <div class="games__upload">
-
+                <!-- Прогресс анализа игр -->
                 <div class="progress-container">
                     <div class="side-number">Проанализировано {{ totalGames - totalUnanalyzedGames }}</div>
                     <div class="circular-progress">
@@ -26,12 +26,12 @@
                     </div>
                     <div class="side-number">{{ totalUnanalyzedGames }} доступно для анализа</div>
                 </div>
-
+                <!-- Интерфейс для управления списком игр -->
                 <div style="display: flex; gap: 20px;">
                     <button class="games__button" :class="{ 'games__button--rotate': isFormShow }" @click="addButtonClickHandler">+</button>
                     <button class="delete-games__button" @click="showDeleteForm"><img class="trashcan" src="../../public/icons/deleteWhite.svg" alt=""></button>
                 </div>
-
+                <!-- Форма загрузки игр -->
                 <div class="games__form" v-show="isFormShow">
                     <div>
                         <label for="" >Lichess nickname:</label>
@@ -53,7 +53,7 @@
                     <button class="pagination__button" @click="buttonClickHandle">{{ isLoading ? 'Пожалуйста, подождите' : 'Загрузить' }}</button>
                     <div v-if="isError">Пользователь с таким именем не найден</div>
                 </div>
-
+                <!-- Форма удаления игр по никнейму -->
                 <div class="delete__form" v-if="isDeleteFormShow">
                     <p>Удалить игры по имени пользователя</p>
                     <select name="" id="" v-model="gameNickname" style="padding: 5px;">
@@ -140,9 +140,7 @@
                         pageSize: pageSize.value,
                     }),
                 })
-
                 const data = await response.json()
-
                 if (data.games) {
                     games.value = data.games
                     if (data.games.length < 15) {
@@ -159,7 +157,6 @@
                     totalPages.value = data.pagination.totalPages || 1
                     totalGames.value = data.pagination.totalGames
                     totalUnanalyzedGames.value = data.pagination.totalUnanalyzedGames
-
                     progress.value = ((totalGames.value - totalUnanalyzedGames.value) * 100) / totalGames.value
                 }
             } catch (error) {
@@ -169,6 +166,7 @@
         getUniqNicknames()
     }
 
+    // Формирование выпадающего списка уникальных никнеймов для формы удаления
     const getUniqNicknames = async () => {
         try {
             const response = await fetch('http://localhost:5000/games/usernames', {
@@ -211,6 +209,7 @@
         }
     }
 
+    // Отправка на сервер запроса для загрузки игр
     const buttonClickHandle = async () => {
         isLoading.value = true
         try {
@@ -248,12 +247,13 @@
         isFormShow.value = false
     }
 
+    // Отправка запроса на сервер для старта анализа
     const startAnalysis = async () => {
         isAnalyseProgress.value = true
         try {
             const interval = setInterval(() => {
                 fetchGames()
-            }, 1000)
+            }, 1000) // Костыль, заменяющий соединение по вебсокету для отслеживания прогресса анализа, нужно переделать
             const response = fetch('http://localhost:5000/games/analyse', {
                 method: 'GET',
                 headers: {
