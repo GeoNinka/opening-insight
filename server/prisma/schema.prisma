@@ -13,7 +13,7 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-
+// Список пользователей
 model User {
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
@@ -26,6 +26,7 @@ model User {
   blunders Blunders[]
 }
 
+// Скачанные игры
 model Games {
   id Int @id @default(autoincrement())
   user User @relation(fields: [userID], references: [id])
@@ -42,6 +43,7 @@ model Games {
   blunders Blunders[]
 }
 
+// Ошибки, найденные в партиях
 model Blunders {
   id Int @id @default(autoincrement())
   from String   
@@ -54,6 +56,7 @@ model Blunders {
   counter Int
 }
 
+// База дебютной теории
 model Theory {
   id Int @id @default(autoincrement())
   fen String @unique
@@ -67,6 +70,7 @@ model Theory {
   toBlunders theoreticalBlunders[] @relation("ToBlunder")
 }
 
+// Ход из базы дебютной теории, представляет собой две позиции, до и после совершения хода
 model theoreticalContinuations {
   id Int @id @default(autoincrement())
   fromId Int
@@ -76,6 +80,7 @@ model theoreticalContinuations {
   to Theory @relation("ToTheory", fields: [toId], references: [id])
 }
 
+// Аналог хода из базы, только хранит ошибку
 model theoreticalBlunders {
   id Int @id @default(autoincrement())
   fromId Int

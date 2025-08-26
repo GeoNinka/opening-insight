@@ -10,57 +10,26 @@
             </div>
 
             <div class="theory__board--wrapper">
-                <div id="board" class="board"></div>
-                <div class="theory__buttons">
-                    <div class="board__buttons-wrapper">
-                        <button class="board__button" @click="undoMove" :disabled="movesStack.length == 1">Вернуть ход</button>
-                        <button class="board__button" @click="resetGame">Начальная позиция </button>
-                        <img class="board__icon"  src="../../icons/refresh-button.svg" alt="">
-                    </div>
-                </div>
+                <ChessBoard v-model:fen="positionFEN" ref="boardRef" :is-using-chess-rules="true"></ChessBoard>
             </div>
             
             <div class="theory__right-table right-table">
                 <div class="right-table__top-bar">
                     <div class="right-table__preview-board" id="preview-board"></div>
-                    <div class="right-table__settings">
-                        <label>Порядок хода</label>
-                        <select v-model="selectedTurn" @change="boardChange" class="right-table__select">
-                            <option value="w">Белые</option>
-                            <option value="b">Черные</option>
-                        </select>
-                        <div>
-                            <label>Рокировка белых</label>
-                            <div>
-                                <label>0-0</label>
-                                <input type="checkbox" v-model="castlingWK" @change="boardChange">
-                                <label>0-0-0</label>
-                                <input type="checkbox" v-model="castlingWQ" @change="boardChange">
-                            </div>
-                            <label>Рокировка черных</label>
-                            <div>
-                                <label>0-0</label>
-                                <input type="checkbox" v-model="castlingBK" @change="boardChange">
-                                <label>0-0-0</label>
-                                <input type="checkbox" v-model="castlingBQ" @change="boardChange">
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
                 <div class="right-table__buttons">
                     <button class="right-table__button" @click="toggleEditor">Открыть редактор</button>
-                    <!-- <button class="right-table__button right-table__button--colored">Удалить позицию</button> -->
                 </div>
                 <p class="right-table__fen">
-                    {{ positionFEN }}
+                    {{ previewPositionFEN }}
                 </p>
                 <ul class="right-table__list">
                     <p>Продолжения</p>
-                    <li class="right-table__item" v-for="(item, index) in continuations" :key="index" @mousemove="handleMouseEnter(item)" @mouseleave="handleMouseLeave" @click="handleContinuationClick(item)">
+                    <li class="right-table__item" v-for="(item, index) in continuations" :key="index" @mousemove="handleMouseEnter(item)" @mouseleave="handleMouseLeave" @click.stop="handleContinuationClick(item)">
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
                         <button class="delete-button" @click.stop="deleteContinuation(item)"><img src="../../icons/deleteWhite.svg" style="max-width: 25px; max-height: 25px;" alt=""></button>
                     </li>
@@ -69,7 +38,6 @@
                         <p class="right-table__move">{{ item.move }}</p>
                         <div class="right-table__pair">
                             <p class="right-table__name">{{ item.toPositionName }}</p>
-                            <!-- <p class="right-table__fen">{{ item.toFen }}</p> -->
                         </div>
                         <button class="delete-button" @click.stop="deleteContinuation(item)"><img src="../../icons/deleteWhite.svg" style="max-width: 25px; max-height: 25px;" alt=""></button>
                     </li>
@@ -77,90 +45,41 @@
             </div>
         </div>
 
-        <div v-show="isEditorOpen" @click="toggleEditor" class="editor">
-            <div @click="handleFormClick" class="editor__wrapper">
-                <button @click="toggleEditor" class="editor__exit">X</button>
-                <div id="editorBoard" class="editor__board"></div>
-
-                <div class="editor__forms">
-                    <div class="editor__form">
-                        <label class="editor__label">Позиция FEN</label>
-                        <p>{{ editorPositionFEN }}</p>
-                        <label class="editor__label">Ход</label>
-                        <p class="editor__move">{{ editorMove }}</p>
-                        <label class="editor__label">Тип позиции</label>
-                        <select class="editor__input" v-model="continuationType">
-                            <option value="continuation">
-                                Продолжение
-                            </option>
-                            <option value="blunder">
-                                Ошибка
-                            </option>
-                        </select>
-                        <button class="editor__button" @click="addPosition">Добавить</button>
-                        <p style="color: black;">{{ editorMessage }}</p>
-                    </div>
-                </div>
-            </div>
+        <div v-show="isEditorOpen" @click.stop="toggleEditor" class="editor">
+            <EditorForm @click="handleFormClick" ref="formRef"></EditorForm>
         </div>
     </div>
 </template>
 
 <script setup>
-    import { onMounted, onUnmounted, ref } from 'vue';
+    import { onMounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
-    import { Chess } from 'chess.js';
     import { Chessboard2 } from '@chrisoakman/chessboard2/dist/chessboard2.min.mjs';
     import '@chrisoakman/chessboard2/dist/chessboard2.min.css'
     import Header from '@/components/Header.vue';
+    import ChessBoard from '@/components/ChessBoard.vue';
+    import EditorForm from '@/components/EditorForm.vue';
+
+    let previewBoard = null
 
     const route = useRoute();
+    const boardRef = ref(null)
+    const isEditorOpen = ref(true) // Нужно открыть форму для правильной отрисовки доски внутри 
+    const continuations = ref([])
+    const blunders = ref([])
+    const formRef = ref(null)
 
-    const isValidated = ref(false)
-    const isEditorOpen = ref(true)
-
-    const game = new Chess()
-
-    let board = null
-    let previewBoard = null
-    let editorBoard = null
-
-    let arrowsJSON = ref({})
-
-    let movesStack = ref(['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq'])
-
-    let editorMessage = ref('')
-
-    let continuations = ref([])
-    let blunders = ref([])
-    let continuationType = ref('continuation')
-
-    const selectedTurn = ref('w')
-    const castlingWK = ref(true)
-    const castlingWQ = ref(true)
-    const castlingBK = ref(true)
-    const castlingBQ = ref(true)
-
-    const positionFEN = ref('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq')
+    const positionFEN = ref('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
     const previewPositionFEN = ref('')
-    const editorPositionFEN = ref('')
-    const editorPositionPGN = ref('')
 
     const openingName = ref('')
     const openingDescription = ref('')
-    const editorMove = ref('')
 
 
     onMounted(async () => {
-        isEditorOpen.value = false
+        isEditorOpen.value = false // Моментально закрываем форму
         positionFEN.value = route.query.positionFEN || ''
-
-        board = Chessboard2('board', {
-            position: `${positionFEN.value.split(' ')[0]}`,
-            draggable: true,
-            showNotation: true,
-            onChange: boardChange
-        })
+        boardRef.value.setPosition(positionFEN.value) // Расставляем фигуры на доске в форме в зависимости от расстановки на основной доске
 
         previewPositionFEN.value = positionFEN.value
         previewBoard = Chessboard2('preview-board', {
@@ -168,107 +87,12 @@
             draggable: false,
             showNotation: false,
         })
-
-        editorPositionFEN.value = positionFEN.value
-        game.load(editorPositionFEN.value)
-        editorBoard = Chessboard2('editorBoard', {
-            position: `${editorPositionFEN.value.split(' ')[0]}`,
-            onDragStart,
-            onDrop,
-            draggable: true
-        })
-
         getContinuations()
-        const ranks = document.getElementsByClassName('rank-3d54c')
     })
-
-    function boardChange() {
-        let CWK = castlingWK.value ? 'K' : ''  
-        let CWQ = castlingWQ.value ? 'Q' : '' 
-        let CBK = castlingBK.value ? 'k' : '' 
-        let CBQ = castlingBQ.value ? 'q' : '' 
-
-        positionFEN.value = `${board.position('fen')} ${selectedTurn.value} ${CWK}${CWQ}${CBK}${CBQ}`
-        previewPositionFEN.value = positionFEN.value
-        previewBoard.fen(previewPositionFEN.value)
-
-        editorPositionFEN.value = positionFEN.value
-        game.reset()
-        game.load(editorPositionFEN.value)
-        editorBoard.fen(editorPositionFEN.value)
-        getContinuations()
-    }
-
-    function undoMove() {
-        movesStack.value.pop()
-        positionFEN.value = movesStack.value[movesStack.value.length - 1]
-        selectedTurn.value == 'w' ? selectedTurn.value = 'b' : selectedTurn.value = 'w'
-        board.fen(positionFEN.value)
-    }
-
-    function onDragStart (dragStartEvt) {
-        if (game.isGameOver()) return false
-
-        if (game.turn() === 'w' && !isWhitePiece(dragStartEvt.piece)) return false
-        if (game.turn() === 'b' && !isBlackPiece(dragStartEvt.piece)) return false
-
-        const legalMoves = game.moves({
-            square: dragStartEvt.square,
-            verbose: true
-        })
-
-        legalMoves.forEach((move) => {
-            editorBoard.addCircle(move.to)
-        })
-    }
-
-    function onDrop (dropEvt) {
-        try {
-            const move = game.move({
-                from: dropEvt.source,
-                to: dropEvt.target,
-                promotion: 'q'
-            })
-
-            if (move) {
-                editorMove.value = move.lan
-            }
-
-            editorBoard.clearCircles()
-            editorBoard.fen(game.fen(), () => {
-                editorPositionFEN.value = game.fen()
-                editorPositionPGN.value = game.pgn().replace(/\[.*?\]\s*/g, '').replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '')
-            })
-        } catch (e) {
-            console.log(e)
-            editorBoard.clearCircles()
-            return 'snapback'
-        }
-    }
-
-    function isWhitePiece (piece) { return /^w/.test(piece) }
-    function isBlackPiece (piece) { return /^b/.test(piece) }
-
-    function resetGame () {
-        game.reset()
-        selectedTurn.value = 'w'
-        board.fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
-        positionFEN.value = game.fen()
-        positionPGN.value = game.pgn().replace(/\[.*?\]\s*/g, '').replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '')
-    }
 
     function toggleEditor() {
         isEditorOpen.value = !isEditorOpen.value
-        editorPositionFEN.value = positionFEN.value
-        game.reset()
-        game.load(editorPositionFEN.value)
-        editorBoard.fen(editorPositionFEN.value)
-        editorMove.value = ''
         getContinuations()
-    }
-
-    function handleFormClick(e) {
-        e.stopPropagation()
     }
 
     async function getContinuations() {
@@ -300,6 +124,7 @@
         }
     }
 
+    // Обновление названия позиции и описания
     async function updatePosition() {
         try {
             const response = await fetch('http://localhost:5000/theory/update', {
@@ -314,47 +139,6 @@
                     positionDescription: openingDescription.value
                 })
             })
-        } catch(error) {
-
-        }
-    }
-
-    async function addPosition() {
-        try {
-            const response = await fetch('http://localhost:5000/theory/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
-                },
-                body: JSON.stringify({
-                    from: positionFEN.value,
-                    to: editorPositionFEN.value.split(' -')[0],
-                    move: editorMove.value,
-                    type: continuationType.value
-                })
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                editorMessage.value = errorData.message
-                editorPositionFEN.value = positionFEN.value
-                game.reset()
-                game.load(editorPositionFEN.value)
-                editorBoard.fen(editorPositionFEN.value)
-                editorMove.value = ''
-                return
-            }
-
-            const data = await response.json()
-            editorMessage.value = data.message
-
-            editorPositionFEN.value = positionFEN.value
-            game.reset()
-            game.load(editorPositionFEN.value)
-            editorBoard.fen(editorPositionFEN.value)
-            editorMove.value = ''
-
         } catch(error) {
 
         }
@@ -391,17 +175,20 @@
     }
 
     function handleContinuationClick(item) {
-        const move = game.move(item.move)
-        if (move) {
-            selectedTurn.value == 'w' ? selectedTurn.value = 'b' : selectedTurn.value = 'w'
-        }
-        board.fen(game.fen(), () => {
-            positionFEN.value = game.fen().split(' -')[0]
-        })
-        movesStack.value.push(positionFEN.value)
+        boardRef.value.makeMove(item)
     }
 
-
+    function handleFormClick(e) {
+        e.stopPropagation()
+    }
+    
+    // Изменение состояния формы при совершении каждого хода
+    watch(positionFEN, (newFEN) => {
+        formRef.value.setupForm(newFEN)
+        previewPositionFEN.value = newFEN.split('-')[0]
+        previewBoard.fen(previewPositionFEN.value)
+        getContinuations()
+    })
 </script>
 
 <style scoped>
@@ -525,7 +312,7 @@
     }
 
     .right-table__preview-board {
-        width: 70%;
+        width: 35%;
         min-width: 20px;
     }    
 
@@ -590,6 +377,7 @@
         backdrop-filter: brightness(60%);
         display: flex;
         align-items: center;
+        justify-content: center;
     }
 
     .editor__wrapper {
@@ -708,11 +496,6 @@
     .right-table__select {
         width: 40%;
         padding: 10px;
-    }
-
-    .editor__move {
-        margin: 0;
-        height: 20px;
     }
 
     .delete-button {

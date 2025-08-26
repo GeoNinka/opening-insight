@@ -3,12 +3,11 @@
         <div :id="blunderData.id" ref="boardContainer" class="blunder__board"></div>
         <p class="blunder__text" v-if="blunderData.counter != null">Встретилось раз: {{ blunderData.counter }}</p>
         <p class="blunder__text" v-if="blunderData.loss != null">Потеря сантипешек: {{ blunderData.loss != null ?  blunderData.loss.toFixed(2) : null }}</p>
-        {{ side }}
     </div>
 </template>
 
 <script setup>
-    import { onMounted, defineProps, ref } from 'vue';
+    import { onMounted, ref } from 'vue';
     import { Chessboard2 } from '@chrisoakman/chessboard2/dist/chessboard2.min.mjs';
 
     const props = defineProps({
@@ -33,6 +32,7 @@
             orientation: props.blunderData.game.side
         })
 
+        // Убираем координаты с доски
         let ranks = document.getElementsByClassName('notation-ranks-d3f97')
         let files = document.getElementsByClassName('notation-files-c3c0a')
         for (let i = 0; i < ranks.length; i++) {

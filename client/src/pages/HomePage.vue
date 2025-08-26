@@ -44,8 +44,6 @@
     import { Chessboard2 } from '@chrisoakman/chessboard2/dist/chessboard2.min.mjs';
     import '@chrisoakman/chessboard2/dist/chessboard2.min.css'
 
-    const positionFEN = ref('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq')
-
     let board = null
 
     let currentIndex = ref(0)

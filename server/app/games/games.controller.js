@@ -5,6 +5,7 @@ import axios from "axios"
 import { Chess } from "chess.js"
 import stockfish from "stockfish"
 
+// Получение списка игр из базы данных 
 export const getGames = asyncHandler(async (req, res) => {
     const nickname = req.body.nickname
 
@@ -21,7 +22,7 @@ export const getGames = asyncHandler(async (req, res) => {
 
         try {
             if (!isGame) {
-                let side = nickname.toLowerCase() === element.players.white.user.id ? 'white' : 'black'
+                let side = nickname.toLowerCase() === element.players.white.user.id ? 'white' : 'black' // Вывод стороны за которую играл пользователь
                 let winner = element.winner == undefined ? '-1' : element.winner
                 return {
                     userID: req.id,
@@ -51,31 +52,18 @@ export const getGames = asyncHandler(async (req, res) => {
     res.json("Ok")
 })
 
+// Получение списка игр с Lichess.API по нику пользователя
 const fetchGames = async (nickname, quantity, color) => {
     let response
     try {
-        if (color == 'both') {
-            response = await axios.get(`https://lichess.org/api/games/user/${nickname}`, {
-                params: {
-                    max: quantity
-                },
-                headers: {
-                    'Accept': 'application/x-ndjson',
-                },
-                responseType: 'text'
-            })
-        } else {
-            response = await axios.get(`https://lichess.org/api/games/user/${nickname}`, {
-                params: {
-                    max: quantity,
-                    color: color
-                },
-                headers: {
-                    'Accept': 'application/x-ndjson',
-                },
-                responseType: 'text'
-            })
-        }
+        response = await axios.get(`https://lichess.org/api/games/user/${nickname}`, {
+            params: color == 'both' ? {max: quantity} : {max: quantity, color: color},
+            headers: {
+                'Accept': 'application/x-ndjson',
+            },
+            responseType: 'text'
+        })
+
         const lines = response.data.trim().split('\n')
         const jsonArray = lines.map(line => JSON.parse(line))
         return jsonArray.reverse()
@@ -85,19 +73,22 @@ const fetchGames = async (nickname, quantity, color) => {
     }
 }
 
+// Старт анализа игр
 export const analyseGames = asyncHandler(async (req, res) => {
-    const engine = stockfish()
-    const blunders = []
+    const engine = stockfish() // Инициализация движка
+    const blunders = [] // Найденные ошибки
 
+    // Старт движка
     await new Promise((resolve) => {
         engine.onmessage = (msg) => {
             const text = msg.data || msg
             if (text === 'readyok') resolve()
         }
-        engine.postMessage('uci')
+        engine.postMessage('uci') // Указываем что будем использовать протокол uci для взаимодействие с движком
         engine.postMessage('isready')
     })
 
+    // Получаем список непроанализированных игр
     const games = await prisma.games.findMany({
         where: {
             userID: req.id,
@@ -106,13 +97,14 @@ export const analyseGames = asyncHandler(async (req, res) => {
         orderBy: { id: 'desc' },
     })
 
+    // Перебираем каждую игру
     for (let i = 0; i < games.length; i++) {
         const chess = new Chess()
         const movesList = games[i].moves.split(' ').slice(0, 8)
         let fenList = []
 
-        fenList.push(chess.fen().split(' -')[0])
-
+        // Представляем список ходов как положение фигур на доске в формате FEN нотации
+        fenList.push(chess.fen().split(' -')[0]) // Записываем в массив стартовую позицию
         try {
             for (let move of movesList) {
                 chess.move(move)
@@ -123,14 +115,18 @@ export const analyseGames = asyncHandler(async (req, res) => {
             fenList = []
         }
 
-
+        // Перебираем список получившихся позиций, каждый ход представлен как две позиции на доске до и после его совершения
         for (let j = 0; j < fenList.length - 1; j++) {
             const fromFEN = fenList[j]
             const toFEN = fenList[j + 1]
 
-            const isUserMove = (games[i].side === 'white' && j % 2 === 0) || (games[i].side === 'black' && j % 2 === 1)
+            // Проверяем только ходы пользователя, ходы противника пропускаем
+            const isUserMove = (games[i].side === 'white' && j % 2 === 0) || (games[i].side === 'black' && j % 2 === 1) 
             if (!isUserMove) continue
 
+            // Пытаемся найти ход в теоретической базе прежде чем проверять его движком для экономии ресурсов
+            // Если ход найден, идём дальше, если ход теоретическая ошибка то записываем его в базу данных и идём к
+            // следующему ходу
             const fromTheory = await prisma.theory.findUnique({ where: { fen: fromFEN } })
             const toTheory = await prisma.theory.findUnique({ where: { fen: toFEN } })
 
@@ -193,6 +189,8 @@ export const analyseGames = asyncHandler(async (req, res) => {
                 }
             }
 
+            // Если ход не найден в базе данных то оцениваем две позиции движком
+            // Если разность оценок выше 0.8, значит ход ошибочный, записываем его в базу данных
             const firstEval = await getEvaluation(fromFEN, engine)
             const secondEval = await getEvaluation(toFEN, engine)
 
@@ -246,10 +244,12 @@ export const analyseGames = asyncHandler(async (req, res) => {
         })
         console.log(`${i}/${games.length}`)
     }
-    engine.postMessage('quit')
+    // Завершаем работу движка и возвращаем найденные ошибки
+    engine.postMessage('quit') 
     res.json(blunders)
 })
 
+// Нужно перенести оценку единичной позиции на клиент
 export const getEvaluationForClient = asyncHandler( async (req, res) => {
     const fen = req.body.fen
 
@@ -304,10 +304,11 @@ const getBestMove = (fen) => {
     });
 }
 
+// Функция оценки позиции
 const getEvaluation = (fen, engine) => {
     return new Promise((resolve, reject) => {
         let resolved = false
-        let attempt = 0
+        let attempt = 0 // Счётчик неудачных попыток
 
         const attemptEvaluation = () => {
             const timeout = setTimeout(() => {
@@ -324,23 +325,23 @@ const getEvaluation = (fen, engine) => {
             }, 1000)
 
             engine.onmessage = (event) => {
+                // Парсим ответы движка для поиска сообщения с оценкой позиции
                 const msg = typeof event === 'string' ? event : event.data
                 if (msg.startsWith('info depth 15')) {
                     engine.postMessage('stop')
-                    const match = msg.match(/score\s(cp|mate)\s(-?\d+)/)
+                    const match = msg.match(/score\s(cp|mate)\s(-?\d+)/) 
                     if (match && !resolved) {
                         clearTimeout(timeout)
                         resolved = true
 
                         const type = match[1]
                         let value = parseInt(match[2], 10)
-
+                        // Проверяем чей ход, если ход черных инвертируем оценку
                         const isBlackMove = fen.split(' ')[1] === 'b'
-
                         if (isBlackMove) {
                             value = -value
                         }
-
+                        // Переводим оценку в формат сантипешек
                         if (type === 'cp') {
                             value = (value / 200).toFixed(2)
                             value = parseFloat(value)
@@ -352,13 +353,14 @@ const getEvaluation = (fen, engine) => {
                 }
             }
             engine.postMessage(`position fen ${fen}`)
+            // Глубина определяет время и качество оценки позиции
             engine.postMessage('go depth 15')
         }
         attemptEvaluation()
     })
 }
 
-
+// Фкнция для оптравки списка ошибок пользователя клиенту
 export const getBlundersReport = asyncHandler(async (req, res) => {
     if (isNaN(req.id)) {
         return res.status(400).json({ error: 'Invalid or missing userId' })
@@ -386,6 +388,7 @@ export const getBlundersReport = asyncHandler(async (req, res) => {
     res.json(sortedBlunders)
 })
 
+// Список аккаунтов, игры которых были скачаны пользователем
 export const getUsernames = asyncHandler(async (req, res) => {
     const games = await prisma.games.findMany({
         where: {userID: req.id},
