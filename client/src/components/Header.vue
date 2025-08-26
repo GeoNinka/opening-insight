@@ -178,7 +178,7 @@
                     email: emailReg.value,
                     name: nameReg.value,
                     password: passwordReg.value,
-                    role: 'user'
+                    role: 'admin'
                 }),
                 headers: {
                     "Content-Type": "application/json"
